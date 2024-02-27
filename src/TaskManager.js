@@ -1,6 +1,6 @@
 import { useDispatch, useSelector } from "react-redux";
 import { useState} from "react";
-import { addTask } from "./taskSlice";
+import { addTask, editTask, removeTask } from "./taskSlice";
 
 const TastManager = ()=>{
     const[addTaskflag, setAddTask]= useState(false);
@@ -9,13 +9,26 @@ const TastManager = ()=>{
         isActive:true,
         description:"",
     })
+    const [editFlag, setEditflag] = useState(false);
     const dispatch = useDispatch();
-
 
     const handleAddTask=(task)=>{
       dispatch(addTask(task));
       setAddTask(false);
       setTaskDetails({taskName:"",isActive:null,description:""})
+    }
+    const handleEditTask=(task)=>{
+      dispatch(editTask({editedTask:task,id:editFlag-1}));
+      setAddTask(false);
+      setTaskDetails({taskName:"",isActive:null,description:""})
+      setEditflag(null);
+    }
+const handleEdit=(task,id)=>{
+  setEditflag(id+1);
+  setTaskDetails({taskName:task.taskName, isActive:task.isActive, description:task.description})
+}
+    const handleDelete =(id)=>{
+      dispatch(removeTask(id));
     }
 
     const tasks = useSelector(state=>state.task.tasks);
@@ -38,7 +51,7 @@ const TastManager = ()=>{
                       type="text"
                       name="task-name"
                       id="task-name"
-                      required={true}
+                      required
                       value={taskName}
                       onChange={(e)=>setTaskDetails({
                         ...taskDetails,taskName:e.target.value
@@ -60,6 +73,7 @@ const TastManager = ()=>{
                       name="task-description"
                       id="task-description"
                       value={description}
+                      required
                       onChange={(e) =>
                       setTaskDetails({
                         ...taskDetails,description:e.target.value
@@ -89,7 +103,6 @@ const TastManager = ()=>{
                           isActive: !isActive,
                         })
                       }
-                      className=""
                     >
                     </input>
                   </div>
@@ -129,14 +142,14 @@ const TastManager = ()=>{
           <div className="flex px-16 justify-between">
             <button
               type="button"
-              onClick={() => setAddTask(false)}
+              onClick={() => {setAddTask(false); setEditflag(false);}}
               className="text-sm font-semibold leading-6 rounded-md hover:bg-slate-400 bg-slate-300 text-gray-900 w-full max-w-60"
             >
               Cancel
             </button>
             <button
-              onClick={() => handleAddTask(taskDetails)}
-              disabled={!(taskName && isActive)}
+              onClick={(tasks && editFlag) ? ()=>handleEditTask(taskDetails): () => handleAddTask(taskDetails)}
+              disabled={!(taskName && description)}
               className=" w-full max-w-60 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50"
             >
               Save
@@ -152,16 +165,20 @@ const TastManager = ()=>{
             className="px-4 py-2 border border-black m-4 bg-lime-300 shadow-lg"
             onClick={()=>setAddTask(!addTaskflag)}>Add Task</button>
 
-          {addTaskflag && 
+          {(addTaskflag || editFlag) && 
             <div className="m-4">
               {addTaskForm()}
             </div>}
-
-            {tasks && tasks.map((item,i)=><div key={i} className="row flex justify-between mx-5 my-3">
+           <div className="grid grid-cols-3">
+            {tasks && tasks.map((item,i)=><div className="col-span-2"><div key={i} className="row shadow-md flex justify-between mx-5 my-3">
               <div className="p-2 text-lg text-teal-600">{item.taskName}</div>
               <div className="p-2">{item.description}</div>
-              <button className="px-3 py-2 bg-blue-500" >Delete</button>
+              <div className="p-2">{item.isActive ? "Active" : "Not Active"}</div>
+              <button className="px-3 my-1 rounded-md bg-blue-300" onClick={()=>handleEdit(item,i)}>Edit</button>
+              <button className="px-3 my-1 rounded-md bg-red-300" onClick={()=>handleDelete(i)} >Delete</button>
+            </div>
             </div>)}
+            </div>
         </div>
     )
 }
